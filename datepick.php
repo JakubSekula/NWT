@@ -7,16 +7,17 @@ include "connect.php";
 $date = $_GET[ 'date' ];
 $id = $_GET[ 'id' ];
 
+if( !preg_match( '/(\d)*/', $id ) ){
+    header( "Location: person.php?id=$id&error=sqlattack" );
+    exit();
+}
+
 // rozdeli format xx-xx-xxxx na casti xx xx xxxx
 $pieces = explode( "-", $date );
 
 $year = $pieces[ 0 ];
 $month = $pieces[ 1 ];
 $day = $pieces[ 2 ];
-
-echo $year;
-echo $month;
-echo $day;
 
 $date = $day.$month.$year;
 

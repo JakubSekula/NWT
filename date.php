@@ -3,6 +3,16 @@
 <?php
 
 /*
+    Funkce tosqlformat prevadi na format xx-xxxx
+    @param $date - datum zaznamu
+    @return - pole casti
+*/
+function tosqlformat( $date ){
+    $pieces = explode( ".", $date );
+    return $pieces;
+}
+
+/*
     Funkce convert prevadi z formatu xx-xxxx
     @param $date - datum zaznamu
     @return - pole casti
@@ -62,7 +72,8 @@ function sumHoursMonthly( $time ){
     @param $klekari - pokud je, tak odchod k lekari
     $return hodiny a minuty
 */
-function countHours( $prichod, $odchod, $odlekare = "00:00", $klekari = "00:00" ){
+function countHours( $denprichod, $denodchod, $prichod, $odchod, $odlekare = "00:00", $klekari = "00:00" ){
+
     $hour1 = substr( $prichod, 0, 2 );
     $min1 = substr( $prichod, 3, 5 );
     $hour2 = substr( $odchod, 0, 2 );
@@ -73,14 +84,18 @@ function countHours( $prichod, $odchod, $odlekare = "00:00", $klekari = "00:00" 
     $hour4 = substr( $klekari, 0, 2 );
     $min4 = substr( $klekari, 3 , 5 );
     
-    
-    
-    $hours = ( ( ( $hour2 - $hour1 ) - ( $hour4 - $hour3 ) ) * 60 + ( ( $min2 - $min1 ) - ( $min- $min3 ) ) ) / 60;
-
-    if( $hours < 0 ){
-        return "error";
+    if( $hour4 <= $hour2 and $hour3 >= $hour1 ){
+        $hours = ( ( ( $hour2 - $hour1 ) - ( $hour4 - $hour3 ) ) * 60 + ( ( $min2 - $min1 ) - ( $min4- $min3 ) ) ) / 60; 
+    } else {
+        $hours = ( ( ( $hour2 - $hour1 ) ) * 60 + ( $min2 - $min1 ) ) / 60;
     }
     
+    if( $hours < 0 && $denprichod == $denodchod ){
+        return "error";
+    } elseif( $hours < 0 && $denprichod != $denodchod ) {
+        $hours = ( ( ( 24 - $hour1 ) + $hour2 ) * 60 + ( ( $min2 - $min1 ) - ( $min4- $min3 ) ) ) / 60;
+    }
+
     if( !strpos( $hours, "." ) ){
         return $hours . ":" . 0;
     }

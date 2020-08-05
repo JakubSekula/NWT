@@ -5,14 +5,18 @@
 <html>
 
 <head>
-<link rel="stylesheet" type="text/css" href="style.css">
-<script src="script.js"></script>
+    <title>
+        Docházkový systém
+    </title>
+    
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="script.js"></script>
 </head>
 
 <body>
 
 <div class="header">
-    <h1><a href='http://kubanwttest.8u.cz'>Dochazkový systém</a></h1>
+    <h1><a href='http://kubanwttest.8u.cz'>Docházkový systém</a></h1>
 </div>
 
 <?php
@@ -41,7 +45,7 @@ function CreateTable( $qresult ) {
             echo "<td><a href='person.php?id=$id'>".$row[ 'jmeno' ]."</td>";
             echo "<td><a href='person.php?id=$id'>".$row[ 'prijmeni' ]."</td>";
             echo "<td>".$row[ 'titul' ]."</td>";
-            echo "<td class=del><a href='delete.php?id=$id'>&#10060</td>";
+            echo "<td class=del><a href='delete.php?id=$id'>&#10060;</td>";
         echo "</tr>";
     }
     
@@ -58,14 +62,20 @@ if( $result->num_rows != 0 ){
 }
 
 echo "<div id='add-item'>";
-    echo "<h4>Nová osoba <a href='#' class='cancel clear' onclick='pop()'>x</a></h4>";
+    echo '<h4>Nová osoba <span class="cross big"><a href="#" class="cancel clear" onclick="pop( \'' . 'add-item' . '\' )">&#10060;</a></span></h4>';
     echo "<hr class='hr-line'>";
-    echo "<form action='insert.php' method='post' class='add-item-form'>";
+    echo "<form action='insert.php' method='post' onsubmit='return hasName()' class='add-item-form'>";
         echo "<p class='add-item-label clear'>Jméno:</p>";
         echo "<input type='text' name='jmeno' class='new-item-input' id='jmeno'>";
         echo "<br>";
         echo "<p class='add-item-label clear'>Příjmení:</p>";
         echo "<input type='text' name='prijmeni' class='new-item-input' id='prijmeni'>";
+        echo "<br>";
+        echo "<p class='add-item-label clear'>Datum narození:</p>";
+        echo "<input type='date' name='dnarozeni' class='new-item-input' id='dnarozeni'>";
+        echo "<br>";
+        echo "<p class='add-item-label clear'>Zaměstnán od:</p>";
+        echo "<input type='date' name='zod' class='new-item-input' id='zod'>";
         echo "<br>";
         echo "<p class='add-item-label clear'>Titul: </p>";
         echo "<select name='titul' id='titul'>";
@@ -75,16 +85,16 @@ echo "<div id='add-item'>";
         echo "</select>";
         echo "<br>";
         echo "<div class = 'wrap'>";
-            echo "<button type='submit' value='Submit' class='login-button border' onclick='pridani()'> <span>Přidat</span> </button>";
+            echo "<button type='submit' value='Submit' class='login-button border'> <span>Přidat</span> </button>";
         echo "</div>";
     echo "</form>";
 echo "</div>";
 
-?>
+echo '<div class="footer">';
+    echo '<button class="button button1" onclick="pop( \'' . 'add-item' . '\' )" id="add_person">Přidat osobu</button>';
+echo '</div>';
 
-<div class="footer">
-    <button class="button button1" onclick="pop()" id="add_person">Přidat osobu</button>
-</div>
+?>
 
 </body>
 </html>

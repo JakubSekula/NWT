@@ -1,104 +1,79 @@
 <!-- insertInfo.php vytvoril Jakub Sekula -->
-<!-- k zamestnanci prida informace do databaze --> 
+<!-- k zaměstnanci prida informace do databáze --> 
 <?php
 
 include "connect.php";
 include "date.php";
 
-/*
-    Funkce vrati informaci o prichodu nebo odchodu pokud je
-    @param $id - identifikator zamestnance
-    @param $date - datum pro zaznam
-    @param $conn - pripojeni k databazi
-    @param $type - 1 je odchod, 0 prichod
-*/
-function getOdchodPrichod( $id, $date, $conn, $type ){
-    if( $type == 1 ){
-        $sql = "SELECT odchod FROM DOCHAZKA WHERE id_osoby = $id AND den = $date";
-    } else {
-        $sql = "SELECT prichod FROM DOCHAZKA WHERE id_osoby = $id AND den = $date";
-    }
-    
-    $res = $conn->query( $sql );
-   
-    if( $res->num_rows != 0 ){
-        while( $row = $res->fetch_assoc() ){
-            if( $type == 1 ){
-                return $row[ 'odchod' ];
-            } else {
-                return $row[ 'prichod' ];
-            }
-        }
-    } else {
-        return "";
-    }
-    
-}
-
-$date = $_POST[ 'date' ];
+$dateenter = $_POST[ 'date' ];
 $time = $_POST[ 'cas' ];
 $id = $_POST[ 'id' ];
+$timeleave = $_POST[ 'casleave' ];
+$dateleave = $_POST[ 'dateleave' ];
 $type = $_POST[ 'type' ];
 
-echo $type;
+if( !preg_match( '/^[0][1-9]\:[0-5][0-9]$/', $time ) ){
+    if( !preg_match( '/^[1-2][0-9]\:[0-5][0-9]$/', $time ) ){
+        header( "Location: person.php?id=$id&error=sqlattack" );
+        exit();
+    }
+}
 
-if( !$type ){
-    header( "Location: person.php?id=$id&error=1" );
+if( !preg_match( '/^[0][1-9]\:[0-5][0-9]$/', $timeleave ) ){
+    if( !preg_match( '/^[1-2][0-9]\:[0-5][0-9]$/', $timeleave ) ){
+        header( "Location: person.php?id=$id&error=sqlattack" );
+        exit();
+    }
+}
+
+$dateenter = convert( $dateenter );
+$dateleave = convert( $dateleave );
+
+if( $dateenter[ 1 ] != $dateleave[ 1 ] && $dateleave[ 2 ] != 1  ){
+    header( "Location: person.php?id=$id&error=2" );
     exit();
 }
 
-
-$date = convert( $date );
+if( ( $dateenter[ 2 ] != $dateleave[ 2 ] - 1 ) ){
+    if( ( $dateenter[ 2 ] != $dateleave[ 2 ] ) and $dateleave[ 2 ] != 1 ){
+        header( "Location: person.php?id=$id&error=2" );
+        exit();
+    }
+}
 
 // poskladani data pro databazovy format
-$date = $date[ 2 ] . $date[ 1 ] . $date[ 0 ];
+$dateenter = $dateenter[ 2 ] . $dateenter[ 1 ] . $dateenter[ 0 ];
+$dateleave = $dateleave[ 2 ] . $dateleave[ 1 ] . $dateleave[ 0 ];
 
-$sql = "SELECT * FROM DOCHAZKA WHERE id_osoby = $id AND den = $date";
+$sql = "SELECT * FROM DOCHAZKA WHERE id_osoby = $id AND den = $dateenter";
 $res = $conn->query( $sql );
+    
+if( $res->num_rows != 0 ){
+    // jestlize byl zadan spatne odchod a prichod, tj. prichod az po odchodu
+    if( countHours( $dateenter, $dateleave, $time, $timeleave ) == "error" ){
+        header( "Location: person.php?id=$id&error=10" );
+        exit();
+    }
+    if( $type == 1 ){
+        $sql = "UPDATE DOCHAZKA SET prichod = '$time', odchod = '$timeleave' WHERE id_osoby = $id AND den = '$dateenter'";
+        $conn->query( $sql );
+    } else {
+        $sql = "UPDATE DOCHAZKA SET klekari = '$time', odlekare = '$timeleave' WHERE id_osoby = $id AND den = '$dateenter'";
+        $conn->query( $sql );
+    }
+} else {
+    if( countHours( $dateenter, $dateleave, $time, $timeleave ) == "error" ){
+        header( "Location: person.php?id=$id&error=10" );
+        exit();
+    }
 
-/*
-    $type == 1 - prichod
-    $type == 2 - odchod
-    $type == 3 - k lekare
-    $type == 4 - od lekare
-*/
-if( $type == 1 ){
-    
-    if( $res->num_rows != 0 ){
-        $odchod = getOdchodPrichod( $id, $date, $conn, 1 );
-        // jestlize byl zadan spatne odchod a prichod, tj. prichod az po odchodu
-        if( countHours( $time, $odchod ) == "error" ){
-            header( "Location: person.php?id=$id&error=10" );
-            exit();
-        }
-        $sql = "UPDATE DOCHAZKA SET prichod = '$time' WHERE id_osoby = $id AND den = '$date'";
+    if( $type == 1 ){
+        $sql = "INSERT INTO DOCHAZKA ( id_osoby, den, denodchod, prichod, odchod ) VALUES ( $id, '$dateenter', '$dateleave', '$time', '$timeleave' )";
         $conn->query( $sql );
     } else {
-        $sql = "INSERT INTO DOCHAZKA ( id_osoby, den, prichod ) VALUES ( $id, '$date', '$time' )";
+        $sql = "INSERT INTO DOCHAZKA ( id_osoby, den, denodchod, klekari, odlekare ) VALUES ( $id, '$dateenter', '$dateleave', '$time', '$timeleave' )";
         $conn->query( $sql );
     }
-} elseif( $type == 2 ) {
-    
-    if( $res->num_rows != 0 ){
-        $prichod = getOdchodPrichod( $id, $date, $conn, 0 );
-        // jestlize byl zadan spatne odchod a prichod, tj. prichod az po odchodu
-        if( countHours( $prichod, $time ) == "error" ){
-            header( "Location: person.php?id=$id&error=11" );
-            
-            exit();
-        }
-        $sql = "UPDATE DOCHAZKA SET odchod = '$time' WHERE id_osoby = $id AND den = '$date'";
-        $conn->query( $sql );
-    } else {
-        $sql = "INSERT INTO DOCHAZKA ( id_osoby, den, odchod ) VALUES ( $id, '$date', '$time' )";
-        $conn->query( $sql );
-    }
-} elseif( $type == 3 ){
-    $sql = "UPDATE DOCHAZKA SET klekari = '$time' WHERE id_osoby = $id AND den = '$date'";
-    $conn->query( $sql );
-} elseif( $type == 4 ){
-    $sql = "UPDATE DOCHAZKA SET odlekare = '$time' WHERE id_osoby = $id AND den = '$date'";
-    $conn->query( $sql );
 }
 
 header( "Location: person.php?id=$id" );
