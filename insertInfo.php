@@ -12,6 +12,11 @@ $timeleave = $_POST[ 'casleave' ];
 $dateleave = $_POST[ 'dateleave' ];
 $type = $_POST[ 'type' ];
 
+if( !preg_match( '/^(\d)+$/', $id ) ){
+    header( "Location: person.php?id=$id&error=sqlattack" );
+    exit();
+}
+
 if( !preg_match( '/^[0][1-9]\:[0-5][0-9]$/', $time ) ){
     if( !preg_match( '/^[1-2][0-9]\:[0-5][0-9]$/', $time ) ){
         header( "Location: person.php?id=$id&error=sqlattack" );
